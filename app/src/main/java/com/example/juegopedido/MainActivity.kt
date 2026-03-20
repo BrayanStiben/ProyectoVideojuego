@@ -16,6 +16,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.juegopedido.features.MemoryCards.JuegoMemoriaScreen
 import com.example.juegopedido.features.MemoryCards.JuegoViewModel
 import com.example.juegopedido.features.PantallaInicio.PantallaInicio
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.CardDefaults
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

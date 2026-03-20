@@ -1,5 +1,6 @@
 package com.example.juegopedido.features.PantallaInicio
 
+import com.example.juegopedido.R
 
 
 import androidx.compose.foundation.layout.*

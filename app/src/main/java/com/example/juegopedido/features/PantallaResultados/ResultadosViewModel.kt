@@ -1,7 +1,7 @@
 package com.example.juegopedido.features.PantallaResultados
 import androidx.lifecycle.ViewModel
 import androidx.room.util.copy
-import androidx.room3.util.copy
+import com.example.juegopedido.R
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -9,6 +9,10 @@ import kotlinx.coroutines.flow.update
 
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.CardDefaults
+
 
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
