@@ -29,134 +29,85 @@ import androidx.compose.material3.*
 import kotlinx.coroutines.flow.collectLatest
 import com.example.juegopedido.R
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 
 
+
 @Composable
-fun JuegoMemoriaScreen(miViewModel: JuegoViewModel = viewModel()) {
+fun JuegoMemoriaScreen(
+    miViewModel: JuegoViewModel,
+    onIrAResultados: () -> Unit // <--- Este es el parámetro que pedía el MainActivity
+) {
     val cartas by miViewModel.cartas.collectAsState()
     val parejas by miViewModel.parejasEncontradas.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-    var esErrorSnackbar by remember { mutableStateOf(false) }
 
-    // Escuchar eventos para el Snackbar
+    // Escuchamos cuando el ViewModel avisa que el juego terminó
     LaunchedEffect(Unit) {
         miViewModel.eventos.collectLatest { evento ->
-            when (evento) {
-                is JuegoViewModel.EventoJuego.MostrarSnackbar -> {
-                    esErrorSnackbar = evento.esError
-                    snackbarHostState.showSnackbar(evento.mensaje)
-                }
+            if (evento is JuegoViewModel.EventoJuego.JuegoCompletado) {
+                // Al ganar, ejecutamos la navegación a la siguiente pantalla
+                onIrAResultados()
             }
         }
     }
 
-    Scaffold(
-        snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState) { data ->
-                Snackbar(
-                    containerColor = if (esErrorSnackbar) Color(0xFFD32F2F) else Color(0xFF388E3C),
-                    contentColor = Color.White,
-                    snackbarData = data
-                )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Títulos e información del jugador
+        Text(
+            text = "Entrenador: ${miViewModel.nombreUsuario}",
+            fontWeight = FontWeight.Bold,
+            color = Color.Gray
+        )
+        Text(
+            text = "Poke-Memory",
+            fontSize = 34.sp,
+            fontWeight = FontWeight.Black,
+            color = Color(0xFF3761A8)
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Panel de puntuación actual
+        Surface(
+            tonalElevation = 4.dp,
+            shape = RoundedCornerShape(16.dp),
+            color = Color(0xFFF5F5F5),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("Parejas: $parejas / 8", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Button(
+                    onClick = { miViewModel.prepararJuego() },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFCC00))
+                ) {
+                    Text("Reiniciar", color = Color(0xFF3761A8), fontWeight = FontWeight.Bold)
+                }
             }
         }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // El Tablero de Juego
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(4),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.fillMaxWidth()
         ) {
-            // --- CABECERA CON ICONO Y TÍTULO ---
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(bottom = 20.dp)
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.icono),
-                    contentDescription = "Logo",
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFFFFCC00)) // Fondo amarillo para el icono
-                        .padding(6.dp)
-                )
-
-                Spacer(modifier = Modifier.width(15.dp))
-
-                Text(
-                    text = "Poke-Memory",
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFF3761A8)
-                )
-            }
-
-            // --- PANEL DE CONTROL (SCORE Y RESET) ---
-            Surface(
-                tonalElevation = 4.dp,
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth(),
-                color = Color(0xFFF5F5F5)
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(text = "Progreso", fontSize = 14.sp, color = Color.Gray)
-                        Text(
-                            text = "$parejas de 8 parejas",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black
-                        )
-                    }
-
-                    Button(
-                        onClick = { miViewModel.prepararJuego() },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFCC00)),
-                        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
-                    ) {
-                        Text("Reiniciar", color = Color(0xFF3761A8), fontWeight = FontWeight.Bold)
-                    }
+            itemsIndexed(cartas) { indice, carta ->
+                CartaItemView(carta = carta) {
+                    miViewModel.seleccionarCarta(indice)
                 }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // --- TABLERO ---
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(4),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.weight(1f)
-            ) {
-                itemsIndexed(cartas) { indice, carta ->
-                    CartaItemView(carta = carta) {
-                        miViewModel.seleccionarCarta(indice)
-                    }
-                }
-            }
-
-            // --- ESTADO DE VICTORIA ---
-            if (parejas == 8) {
-                Text(
-                    text = "¡ERES UN MAESTRO! 🏆",
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.Black,
-                    color = Color(0xFF388E3C),
-                    modifier = Modifier.padding(vertical = 20.dp)
-                )
             }
         }
     }
@@ -179,13 +130,13 @@ fun CartaItemView(carta: CartaMemoria, alClick: () -> Unit) {
             Image(
                 painter = painterResource(id = carta.imagenRes),
                 contentDescription = null,
-                modifier = Modifier.fillMaxSize().padding(10.dp)
+                modifier = Modifier.fillMaxSize().padding(8.dp)
             )
         } else {
             Text(
                 text = "?",
                 color = Color(0xFF3761A8),
-                fontSize = 28.sp,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
             )
         }

@@ -7,18 +7,40 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+ import kotlinx.coroutines.flow.asSharedFlow
+
+
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
 class JuegoViewModel : ViewModel() {
     private val _cartas = MutableStateFlow<List<CartaMemoria>>(emptyList())
     val cartas = _cartas.asStateFlow()
 
-    // Estado para el contador de parejas
     private val _parejasEncontradas = MutableStateFlow(0)
     val parejasEncontradas = _parejasEncontradas.asStateFlow()
+
+    // Datos del jugador
+    var nombreUsuario by mutableStateOf("")
+    var tiempoFinal by mutableStateOf(0L)
+
+    // Lógica del cronómetro
+    private var tiempoInicio = 0L
+    private var cronometroJob: Job? = null
 
     private val _eventos = MutableSharedFlow<EventoJuego>()
     val eventos = _eventos.asSharedFlow()
@@ -27,29 +49,25 @@ class JuegoViewModel : ViewModel() {
     private var bloqueoTablero: Boolean = false
 
     sealed class EventoJuego {
-        data class MostrarSnackbar(val mensaje: String, val esError: Boolean) : EventoJuego()
+        object JuegoCompletado : EventoJuego()
     }
 
-    init {
+    fun iniciarJuego() {
         prepararJuego()
+        tiempoInicio = System.currentTimeMillis()
     }
 
     fun prepararJuego() {
-        // Reiniciamos estados lógicos
         indicePrimeraCarta = null
         bloqueoTablero = false
         _parejasEncontradas.value = 0
-
         val imagenes = listOf(
-            R.drawable.pokemon1, R.drawable.pokemon2,
-            R.drawable.pokemon3, R.drawable.pokemon4,
-            R.drawable.pokemon5, R.drawable.pokemon6,
-            R.drawable.pokemon7, R.drawable.pokemon8
+            R.drawable.pokemon1, R.drawable.pokemon2, R.drawable.pokemon3, R.drawable.pokemon4,
+            R.drawable.pokemon5, R.drawable.pokemon6, R.drawable.pokemon7, R.drawable.pokemon8
         )
-        val listaMezclada = (imagenes + imagenes).shuffled().mapIndexed { i, res ->
+        _cartas.value = (imagenes + imagenes).shuffled().mapIndexed { i, res ->
             CartaMemoria(id = i, imagenRes = res)
         }
-        _cartas.value = listaMezclada
     }
 
     fun seleccionarCarta(posicion: Int) {
@@ -63,7 +81,6 @@ class JuegoViewModel : ViewModel() {
         } else {
             val primerIdx = indicePrimeraCarta!!
             if (primerIdx == posicion) return
-
             lista[posicion] = lista[posicion].copy(estaVolteada = true)
             _cartas.value = lista
             verificarPareja(primerIdx, posicion)
@@ -78,14 +95,16 @@ class JuegoViewModel : ViewModel() {
                 lista[idx1] = lista[idx1].copy(estaEmparejada = true)
                 lista[idx2] = lista[idx2].copy(estaEmparejada = true)
                 _cartas.value = lista
-
-                // Aumentamos el score
                 _parejasEncontradas.value += 1
 
-                _eventos.emit(EventoJuego.MostrarSnackbar("¡Pareja encontrada! 🎉", false))
+                if (_parejasEncontradas.value == 8) {
+                    // Calculamos el tiempo transcurrido
+                    tiempoFinal = (System.currentTimeMillis() - tiempoInicio) / 1000
+                    delay(500)
+                    _eventos.emit(EventoJuego.JuegoCompletado)
+                }
             } else {
                 bloqueoTablero = true
-                _eventos.emit(EventoJuego.MostrarSnackbar("No son iguales ❌", true))
                 delay(1000)
                 lista[idx1] = lista[idx1].copy(estaVolteada = false)
                 lista[idx2] = lista[idx2].copy(estaVolteada = false)
