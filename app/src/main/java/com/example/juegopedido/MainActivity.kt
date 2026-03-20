@@ -25,6 +25,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     // AQUÍ LLAMAMOS A TU PANTALLA
                     JuegoMemoriaScreen()
+
                 }
             }
         }
