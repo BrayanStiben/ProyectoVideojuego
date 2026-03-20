@@ -115,6 +115,7 @@ fun PantallaResultados(
                         Icon(Icons.Default.Timer, contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text("TIEMPO FINAL", style = MaterialTheme.typography.labelMedium)
+
                     }
 
                     Text(
