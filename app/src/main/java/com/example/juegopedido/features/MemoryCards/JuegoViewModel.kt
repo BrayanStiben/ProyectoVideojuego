@@ -23,10 +23,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-
 class JuegoViewModel : ViewModel() {
     private val _cartas = MutableStateFlow<List<CartaMemoria>>(emptyList())
     val cartas = _cartas.asStateFlow()
@@ -40,7 +36,6 @@ class JuegoViewModel : ViewModel() {
 
     // Lógica del cronómetro
     private var tiempoInicio = 0L
-    private var cronometroJob: Job? = null
 
     private val _eventos = MutableSharedFlow<EventoJuego>()
     val eventos = _eventos.asSharedFlow()
@@ -98,8 +93,8 @@ class JuegoViewModel : ViewModel() {
                 _parejasEncontradas.value += 1
 
                 if (_parejasEncontradas.value == 8) {
-                    // Calculamos el tiempo transcurrido
-                    tiempoFinal = (System.currentTimeMillis() - tiempoInicio) / 1000
+                    // Guardamos el tiempo exacto en milisegundos
+                    tiempoFinal = System.currentTimeMillis() - tiempoInicio
                     delay(500)
                     _eventos.emit(EventoJuego.JuegoCompletado)
                 }

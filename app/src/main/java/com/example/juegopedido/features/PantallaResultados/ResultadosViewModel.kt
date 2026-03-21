@@ -1,42 +1,27 @@
 package com.example.juegopedido.features.PantallaResultados
+
 import androidx.lifecycle.ViewModel
-import androidx.room.util.copy
-import com.example.juegopedido.R
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.material3.CardDefaults
-
-
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import java.util.Locale
 
 class ResultadosViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(ResultadosState())
     val uiState: StateFlow<ResultadosState> = _uiState.asStateFlow()
 
-    fun actualizarDatos(nombre: String, tiempoEntrada: Long) {
-        // CORRECCIÓN: Si el tiempo es menor a 1000,
-        // es probable que nos estén pasando segundos en lugar de ms.
-        val tiempoMs = if (tiempoEntrada < 1000 && tiempoEntrada > 0) {
-            tiempoEntrada * 1000
-        } else {
-            tiempoEntrada
-        }
-
-        val totalSegundos = tiempoMs / 1000
+    fun actualizarDatos(nombre: String, tiempoMs: Long) {
+        // Aseguramos que el tiempo no sea negativo
+        val tiempoTratado = if (tiempoMs < 0) 0L else tiempoMs
+        
+        val totalSegundos = tiempoTratado / 1000
         val minutos = totalSegundos / 60
         val segundos = totalSegundos % 60
-        val centesimas = (tiempoMs % 1000) / 10
+        val centesimas = (tiempoTratado % 1000) / 10
 
-        // Esto te dará 05:42:15 (5 min, 42 seg, 15 centésimas)
-        val tiempoTexto = String.format("%02d:%02d:%02d", minutos, segundos, centesimas)
+        // Formato estándar 00:00:00
+        val tiempoTexto = String.format(Locale.getDefault(), "%02d:%02d:%02d", minutos, segundos, centesimas)
 
         _uiState.update {
             it.copy(
